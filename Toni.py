@@ -30,12 +30,12 @@ class Toni:
             for word in pool:
                 if word[idx] == self.word_letters[idx+1][0]:
                     res.add(word)
-                elif word[idx] not in self.word_letters[idx+1][1]:
+                elif word[idx] not in self.word_letters[idx+1][1] and self.word_letters[idx+1][0] == '':
                     res.add(word)
 
             return res
 
-        pool = words
+        pool = self.pool
         for idx in range(5):
             pool = filtering(idx, pool)
 
@@ -49,6 +49,7 @@ class Toni:
 
         self.buttons = self.__get_letters()
 
+        self.pool = words
         self.word_letters = {
             1: ['', set()],
             2: ['', set()],
@@ -56,6 +57,12 @@ class Toni:
             4: ['', set()],
             5: ['', set()],
         }
+
+    def ban(self, idx, letter) -> None:
+        self.word_letters[idx][1].add(letter)
+
+    def ensure_letter(self, idx, letter) -> None:
+        self.word_letters[idx][0] = letter
 
     def type_word(self, word) -> None:
         for letter in word:
