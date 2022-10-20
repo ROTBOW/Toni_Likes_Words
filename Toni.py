@@ -1,8 +1,10 @@
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium import webdriver
-from words import words # this is just a set of a lot of five letter words.
 from time import sleep
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
+from words import words  # this is just a set of a lot of five letter words.
 
 
 class Toni:
@@ -18,13 +20,13 @@ class Toni:
     def __close_splash(self) -> None:
         self.driver.find_element(By.CLASS_NAME, 'close-button').click()
 
-    def __click_button(self, button) -> None:
+    def __click_button(self, button: str) -> None:
         if button not in self.buttons:
             raise ValueError('That is not a vaild button, vaild buttons are a-z, enter, and del.')
         self.buttons[button].click()
 
     def __filter_words(self) -> set:
-        def filtering(idx, pool):
+        def filtering(idx: int, pool: set) -> set:
             res = set()
 
             for word in pool:
@@ -41,7 +43,14 @@ class Toni:
 
         return pool
 
-    def __init__(self) -> None:
+    def __write_pool(self):
+        with open('pool.txt', 'w') as file:
+            file.write(f'{len(self.pool)} possible words\n{self.word_letters}\n')
+            print('last word tried: ', end='')
+            for item in self.pool:
+                file.write(f'{item}\n')
+
+    def start_session(self) -> None:
         self.driver = webdriver.Firefox()
         self.driver.get(r'https://www.wordhell.net/')
         sleep(0.5)
@@ -49,6 +58,8 @@ class Toni:
 
         self.buttons = self.__get_letters()
 
+    def __init__(self) -> None:
+        self.row = 0
         self.pool = words
         self.word_letters = {
             1: ['', set()],
@@ -58,23 +69,68 @@ class Toni:
             5: ['', set()],
         }
 
-    def ban(self, idx, letter) -> None:
+    def ban(self, idx: int, letter: str) -> None:
         self.word_letters[idx][1].add(letter)
 
-    def ensure_letter(self, idx, letter) -> None:
+    def ban_word(self, word: str) -> None:
+        for idx, letter in enumerate(word):
+            self.word_letters[idx+1][1].add(letter)
+
+    def ensure_letter(self, idx: int, letter: str) -> None:
         self.word_letters[idx][0] = letter
 
-    def type_word(self, word) -> None:
+    def type_word(self, word: str) -> None:
         for letter in word:
             self.__click_button(letter)
 
-    def guess(self) -> None:
-        word_pool = self.__filter_words()
-        self.type_word(word_pool.pop())
-    
+    def remove_word(self) -> None:
+        for _ in range(5):
+            self.__click_button('del')
+
+    def get_message(self) -> str:
+        sleep(.5)
+        try:
+            gom = self.driver.find_element(By.ID, 'gameover-message')
+            gom.screenshot('text_check.png')
+            sleep(1.5)
+
+            if open('t_TAW.png', 'rb').read() == open('text_check.png', 'rb').read():
+                gom = 'TAW'
+            else:
+                gom = 'COR'
+
+        except Exception as err:
+            print(err)
+            gom = None
+
+        return gom
+
+    def guess(self) -> str:
+        self.pool = self.__filter_words()
+        self.__write_pool()
+        self.type_word(self.pool.pop())
+        self.__click_button('enter')
+        return self.get_message()
 
     
+    
+
+    def play(self) -> None:
+        self.start_session()
+        playing = True
+        while playing:
+            guess = self.guess()
+            if guess == 'TAW':
+                self.remove_word()
+                continue
+            
+'''
+Need to add:
+    grabing letters from grid
+        getting color for each letter
+'''
 
 
 
 # toni = Toni()
+# print(toni.guess())

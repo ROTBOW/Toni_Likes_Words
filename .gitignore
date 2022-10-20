@@ -2,3 +2,5 @@ __pycache__
 geckodriver.log
 word_thing.py
 words_alpha.txt
+pool.txt
+text_check.png
