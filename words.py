@@ -1,4 +1,4 @@
-words = set([
+words = {
  "trows", "thews", "scatt", "sunil", "yakka", "kaiak", "highs", "huzza", "pekes", "calve", "delfs",
  "lindo", "fiard", "gilia", "klaus", "prahu", "whish", "toras", "spuke", "nondo", "subch",
  "goopy", "beche", "circs", "ervum", "ruddy", "talli", "bovid", "segar", "karch", "rusts",
@@ -1590,4 +1590,4 @@ words = set([
  "taxor", "batwa", "price", "crunt", "salva", "samir", "saute", "timed", "trims", "moody",
  "mungo", "puggy", "seder", "awalt", "lapel", "twank", "alane", "frist", "noggs", "dusts",
  "uayeb", "tahua", "tawpi", "liner", "crick", "keach", "roast", "golly", "aigre", "flung",
- "crust", "laten", "eched", "heros", "eably", "bensh", "abaka", "izumi", "fudgy",])
+ "crust", "laten", "eched", "heros", "eably", "bensh", "abaka", "izumi", "fudgy",}
