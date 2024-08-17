@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains as ac
 
-from words import words  # this is just a set of a lot of five letter words.
+from words import words  # this is just a set of a lot (15k+) of five letter words.
 
 
 class Toni:
@@ -68,6 +68,7 @@ class Toni:
         self.row = 1
         self.pool = words
         self.curr_word = str()
+        self.present = set()
         self.word_letters = {
             1: ['', set()],
             2: ['', set()],
@@ -95,53 +96,65 @@ class Toni:
         actions = ac(self.driver)
         for _ in range(5):
             actions.send_keys(Keys.BACKSPACE).perform()
-        sleep(.5)
+            sleep(.1)
 
     def update_from_row(self, r: int) -> None:
         row = self.driver.find_element(By.XPATH, f'//div[@aria-label="Row {r}"]')
         tiles = row.find_elements(By.CSS_SELECTOR, '[aria-roledescription="tile"]')
         
-        self.__tprint('Updating what I know about the word!')
+        self.__tprint('Thinking...')
         for tile in tiles:
             data = tile.get_attribute('aria-label').split(',')
-            # if the len of data isn't 3, that means it a word that isn't on the list
-            # we can stop the method and the main loop should just keep trying the next words on our list
-            if len(data) != 3:
-                return self.clear_row()
             
             # rip the data we need, letter, pos, and state
             idx = data[0][0]
             letter = data[1].strip().lower()
             state = data[2].strip().lower()
-            
             # use said data to update our word_letters
-            if state == 'absent':
+            if state == 'absent' and letter not in self.present:
                 self.ban_letter(letter)
             elif state == 'correct':
                 self.ensure_letter(idx, letter)
             else:
                 # meaning its present, just not at this spot
                 self.ban(idx, letter)
+                self.present.add(letter)
+                
         # after this has been ran, then we're done with this row and can start the next one
         self.row += 1
-        sleep(2)
         
 
-    def guess(self) -> str:
+    def guess(self) -> None:
         # gen our pool, based on the info stored in word_letters
         self.pool = self.__filter_words()
         self.__write_pool() # writes current pool to the txt file
         
         # type in the current word and submit it
+        if len(self.pool) == 0:
+            return 
         self.curr_word = self.pool.pop()
         
         actions = ac(self.driver)
-        actions.send_keys(self.curr_word).send_keys(Keys.ENTER).perform()
+        for letter in self.curr_word:
+            actions.send_keys(letter).perform()
+            sleep(.1)
+        actions.send_keys(Keys.ENTER).perform()
+        sleep(1)
+        
+        # after we input a word, we check that it is in the wordlist
+        # if not, we remove it and return False
+        row = self.driver.find_element(By.XPATH, f'//div[@aria-label="Row {self.row}"]')
+        tile = row.find_elements(By.CSS_SELECTOR, '[aria-roledescription="tile"]')[0]
+        if len(tile.get_attribute('aria-label').split(',')) != 3:
+            self.clear_row()
+            print('bad word!', self.curr_word, tile.get_attribute('aria-label').split(','))
+            return False
+        return True
     
     
     def check_if_over(self) -> bool:
         try:
-            # looking for the input for email, when you win they ask you to create a account
+            # looking for the input for email, when you win/lose they ask you to create a account
             self.driver.find_element(By.XPATH, '//fieldset[@type="email"]')
             return True
         except:
@@ -151,9 +164,15 @@ class Toni:
         self.start_session()
         playing = True
         while playing:
+            sleep(.5)
+            # ensure we have words in the pool
+            if len(self.pool) == 0 or self.row > 6:
+                break
+            
             # make guess and update our word_letters as needed
-            self.guess()
-            self.update_from_row(self.row)
+            if self.guess():
+                sleep(1)
+                self.update_from_row(self.row)
             
             if self.check_if_over():
                 playing = False
