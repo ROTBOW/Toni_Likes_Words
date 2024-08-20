@@ -11,7 +11,8 @@ from words import words  # this is just a set of a lot (15k+) of five letter wor
 
 class Toni:
     
-    def __tprint(self, string: str) -> None:
+    @staticmethod
+    def __tprint(string: str) -> None:
         print(f'Toni:', string)
         
     def __pretty_format(self) -> str:
@@ -52,7 +53,7 @@ class Toni:
         with open('pool.txt', 'w') as file:
             file.write(f'{len(self.pool)} possible words\n')
             file.write(f'{self.__pretty_format()}\n')
-            file.write('last word tried: ')
+            file.write('Current word: ')
             for item in self.pool:
                 file.write(f'{item}\n')
 
@@ -147,12 +148,12 @@ class Toni:
         tile = row.find_elements(By.CSS_SELECTOR, '[aria-roledescription="tile"]')[0]
         if len(tile.get_attribute('aria-label').split(',')) != 3:
             self.clear_row()
-            print('bad word!', self.curr_word, tile.get_attribute('aria-label').split(','))
+            # print('bad word!', self.curr_word, tile.get_attribute('aria-label').split(','))
             return False
         return True
     
     
-    def check_if_over(self) -> bool:
+    def check_if_over(self) -> bool: # want to expand this to better check if lost or won after game over
         try:
             # looking for the input for email, when you win/lose they ask you to create a account
             self.driver.find_element(By.XPATH, '//fieldset[@type="email"]')
