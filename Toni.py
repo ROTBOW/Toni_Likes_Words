@@ -48,6 +48,17 @@ class Toni:
             pool = filtering(idx, pool)
 
         return pool
+    
+    def __sort_words(self) -> list[str]:
+        if self.present:
+            sorted_words = list(self.pool)
+            sorted_words.sort(
+                key=lambda word: any([pres_letter in word for pres_letter in self.present]),
+                reverse=True
+            )
+            return sorted_words
+        else:
+            return list(self.pool)
 
     def __write_pool(self):
         with open('pool.txt', 'w') as file:
@@ -128,12 +139,19 @@ class Toni:
     def guess(self) -> None:
         # gen our pool, based on the info stored in word_letters
         self.pool = self.__filter_words()
-        self.__write_pool() # writes current pool to the txt file
+        # writes current pool to the txt file
+        self.__write_pool()
+        # sorts the filtered words by present letters, this is to make better use of the present letters that we have
+        sorted_words = self.__sort_words()
         
         # type in the current word and submit it
         if len(self.pool) == 0:
-            return 
-        self.curr_word = self.pool.pop()
+            return
+        
+        # sort grab the top word from the sorted words and try it
+        self.curr_word = sorted_words.pop()
+        # remove that word from our main (set)pool
+        self.pool.remove(self.curr_word)
         
         actions = ac(self.driver)
         for letter in self.curr_word:
@@ -148,7 +166,6 @@ class Toni:
         tile = row.find_elements(By.CSS_SELECTOR, '[aria-roledescription="tile"]')[0]
         if len(tile.get_attribute('aria-label').split(',')) != 3:
             self.clear_row()
-            # print('bad word!', self.curr_word, tile.get_attribute('aria-label').split(','))
             return False
         return True
     
@@ -183,6 +200,7 @@ class Toni:
             self.__tprint(f'GOT IT~ heck yeah boi, i\'m so freaking good at this - oh the word was {self.curr_word}')
         else:
             self.__tprint(f'Alrighty! all done, not sure if I won or not haha... my last guess was {self.curr_word}')
+        self.driver.close()
             
             
 
