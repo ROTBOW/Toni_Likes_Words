@@ -53,19 +53,19 @@ class Toni:
         if self.present:
             sorted_words = list(self.pool)
             sorted_words.sort(
-                key=lambda word: any([pres_letter in word for pres_letter in self.present]),
-                reverse=True
+                key=lambda word: sum(pres_letter in word for pres_letter in self.present),
             )
             return sorted_words
         else:
             return list(self.pool)
 
-    def __write_pool(self):
+    def __write_pool(self, pool: list[str]):
         with open('pool.txt', 'w') as file:
-            file.write(f'{len(self.pool)} possible words\n')
+            file.write(f'{len(pool)} possible words\n')
             file.write(f'{self.__pretty_format()}\n')
+            file.write(f'{self.present}\n')
             file.write('Current word: ')
-            for item in self.pool:
+            for item in pool[::-1]:
                 file.write(f'{item}\n')
 
     def start_session(self) -> None:
@@ -114,7 +114,7 @@ class Toni:
         row = self.driver.find_element(By.XPATH, f'//div[@aria-label="Row {r}"]')
         tiles = row.find_elements(By.CSS_SELECTOR, '[aria-roledescription="tile"]')
         
-        self.__tprint('Thinking...')
+        self.__tprint(f'Thinking... word was {self.curr_word}')
         for tile in tiles:
             data = tile.get_attribute('aria-label').split(',')
             
@@ -139,10 +139,10 @@ class Toni:
     def guess(self) -> None:
         # gen our pool, based on the info stored in word_letters
         self.pool = self.__filter_words()
-        # writes current pool to the txt file
-        self.__write_pool()
         # sorts the filtered words by present letters, this is to make better use of the present letters that we have
         sorted_words = self.__sort_words()
+        # writes current pool to the txt file
+        self.__write_pool(sorted_words)
         
         # type in the current word and submit it
         if len(self.pool) == 0:
